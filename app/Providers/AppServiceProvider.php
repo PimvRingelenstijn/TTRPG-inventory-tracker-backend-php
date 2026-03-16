@@ -29,8 +29,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(GameSystemRepository::class, fn () => new GameSystemRepository(app(\App\Models\GameSystem::class)));
-        $this->app->bind(GameSystemService::class, fn () => new GameSystemService(app(GameSystemRepository::class)));
         $this->app->bind(UserRepository::class, fn () => new UserRepository(app(\App\Models\User::class)));
+        $this->app->bind(GameSystemService::class, fn () => new GameSystemService(app(GameSystemRepository::class)));
         $this->app->bind(AuthService::class, fn () => new AuthService(app(Service::class), app(UserRepository::class)));
 
     }

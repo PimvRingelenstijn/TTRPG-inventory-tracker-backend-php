@@ -3,7 +3,7 @@
 namespace App\Utils;
 
 use Carbon\Carbon;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class CookieUtils
 {

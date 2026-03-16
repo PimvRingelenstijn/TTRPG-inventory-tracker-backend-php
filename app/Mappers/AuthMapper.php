@@ -29,7 +29,7 @@ class AuthMapper
     }
 
     /**
-     * Map Supabase user + DB User to UserDataResponse.
+     * Map Supabase Auth user + DB User to UserDataResponse. Username from users table.
      */
     public static function toUserDataResponse(object $authUser, User $dbUser): UserDataResponse
     {

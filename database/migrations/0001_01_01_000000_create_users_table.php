@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * Matches Python app/dbmodels/user_db.py: uuid (PK), username, created_at, updated_at
+     * Pairs with Supabase Auth: uuid = auth.users.id, username stored here.
      */
     public function up(): void
     {
@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('username');
             $table->timestamps();
         });
-
     }
 
     /**
