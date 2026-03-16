@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use PHPSupabase\Service;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -21,6 +22,7 @@ class SupabaseAuthMiddleware
         $accessToken = $request->cookie('access_token');
 
         if (!$accessToken) {
+            Log::info('Auth middleware: No access_token cookie');
             return response()->json(['detail' => 'Not authenticated'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -29,11 +31,15 @@ class SupabaseAuthMiddleware
             $data = $auth->getUser($accessToken);
 
             if (!$data || ($data->aud ?? null) !== 'authenticated') {
+                Log::warning('Auth middleware: Token validation failed', ['aud' => $data?->aud ?? 'null']);
                 return response()->json(['detail' => 'Invalid authentication token'], Response::HTTP_UNAUTHORIZED);
             }
 
             $request->attributes->set('supabase_user', $data);
         } catch (\Exception $e) {
+            Log::warning('Auth middleware: Token validation error', [
+                'message' => $e->getMessage(),
+            ]);
             return response()->json(['detail' => 'Invalid authentication token'], Response::HTTP_UNAUTHORIZED);
         }
 

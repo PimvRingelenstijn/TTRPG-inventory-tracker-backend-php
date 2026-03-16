@@ -10,6 +10,7 @@ use App\Mappers\AuthMapper;
 use App\Mappers\UserMapper;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Log;
 use PHPSupabase\Service;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -47,19 +48,37 @@ class AuthService
 
     public function loginUser(LoginRequest $request): LoginResult
     {
+        Log::info('Login attempt', ['email' => $request->email]);
+
         try {
             $auth = $this->supabase->createAuth();
             $auth->signInWithEmailAndPassword($request->email, $request->password);
             $data = $auth->data();
 
-            $dbUser = $this->userRepository->getByUuid($data->user->id);
+            $supabaseUserId = $data->user->id ?? null;
+            if (!$supabaseUserId) {
+                Log::warning('Login failed: Supabase response missing user id');
+                throw new \Exception('Supabase response missing user id');
+            }
+            Log::info('Supabase auth succeeded', ['user_id' => $supabaseUserId]);
+
+            $dbUser = $this->userRepository->getByUuid($supabaseUserId);
             if (!$dbUser) {
+                Log::warning('Login failed: User not found in users table', ['user_id' => $supabaseUserId]);
                 throw new \Exception('User not found in database');
             }
+            Log::info('Login succeeded', ['user_id' => $supabaseUserId, 'username' => $dbUser->username]);
 
             $userDataResponse = AuthMapper::toUserDataResponse($data->user, $dbUser);
             return AuthMapper::toLoginResult($data, $userDataResponse);
+        } catch (HttpResponseException $e) {
+            throw $e;
         } catch (\Exception $e) {
+            Log::warning('Login failed', [
+                'email' => $request->email,
+                'reason' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             throw new HttpResponseException(
                 response()->json(
                     ['detail' => 'Invalid credentials'],
