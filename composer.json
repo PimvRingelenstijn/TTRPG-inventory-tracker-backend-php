@@ -11,6 +11,7 @@
         "rafaelwendel/phpsupabase": "^0.0.11"
     },
     "require-dev": {
+        "behat/behat": "^3.29",
         "fakerphp/faker": "^1.23",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
@@ -46,7 +47,9 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --ansi"
-        ]
+        ],
+        "test": "php -d error_reporting=24575 vendor/bin/behat",
+        "test:pretty": "php -d error_reporting=24575 vendor/bin/behat --format=pretty"
     },
     "extra": {
         "branch-alias": {
