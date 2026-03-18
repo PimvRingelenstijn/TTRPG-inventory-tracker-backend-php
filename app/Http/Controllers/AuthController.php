@@ -17,24 +17,59 @@ class AuthController extends Controller
         private readonly AuthService $authService
     ) {}
 
+    //debug
     public function register(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-            'username' => 'required|string',
-        ]);
+        // Add debug logging
+        error_log("=== AuthController::register called ===");
+        error_log("Request data: " . json_encode($request->all()));
 
-        $dto = new RegistrationRequest(
-            email: $validated['email'],
-            password: $validated['password'],
-            username: $validated['username'],
-        );
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+                'username' => 'required|string',
+            ]);
 
-        $result = $this->authService->registerUser($dto);
+            error_log("Validation passed: " . json_encode($validated));
 
-        return response()->json($result, 201);
+            $dto = new RegistrationRequest(
+                email: $validated['email'],
+                password: $validated['password'],
+                username: $validated['username'],
+            );
+
+            $result = $this->authService->registerUser($dto);
+            error_log("AuthService::registerUser succeeded");
+
+            return response()->json($result, 201);
+        } catch (\Exception $e) {
+            error_log("!!! Exception in register: " . get_class($e));
+            error_log("Message: " . $e->getMessage());
+            error_log("File: " . $e->getFile() . ":" . $e->getLine());
+            throw $e; // Re-throw to see it in test output
+        }
     }
+
+    //actual function
+//    public function register(Request $request): JsonResponse
+//    {
+//        $validated = $request->validate([
+//            'email' => 'required|email',
+//            'password' => 'required|string',
+//            'username' => 'required|string',
+//        ]);
+//
+//        $dto = new RegistrationRequest(
+//            email: $validated['email'],
+//            password: $validated['password'],
+//            username: $validated['username'],
+//        );
+//
+//        $result = $this->authService->registerUser($dto);
+//
+//        return response()->json($result, 201);
+//    }
 
     public function login(Request $request): JsonResponse
     {

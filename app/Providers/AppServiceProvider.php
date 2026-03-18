@@ -17,12 +17,17 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Service::class, function () {
+            // If we're in testing, return a mock
+            if ($this->app->environment('testing')) {
+                return new \Mocks\MockSupabaseService();
+            }
+
+            // Otherwise, use real Supabase
             $url = config('supabase.url');
             $key = config('supabase.service_key');
             if (empty($url) || empty($key)) {
                 throw new \RuntimeException(
-                    'SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in .env.python_backend for auth. ' .
-                    'Get them from Supabase: Project Settings → API → Project URL and service_role key.'
+                    'SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in .env for auth.'
                 );
             }
             return new Service($key, $url);

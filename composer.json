@@ -29,7 +29,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Mocks\\": "features/bootstrap/Mocks/"
         }
     },
     "scripts": {
@@ -48,7 +49,7 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --ansi"
         ],
-        "test": "php -d error_reporting=24575 vendor/bin/behat",
+        "test": "php -d error_reporting=24575 vendor/bin/behat --format=progress --colors",
         "test:pretty": "php -d error_reporting=24575 vendor/bin/behat --format=pretty"
     },
     "extra": {

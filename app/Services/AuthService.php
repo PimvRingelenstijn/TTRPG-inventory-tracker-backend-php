@@ -18,24 +18,68 @@ class AuthService
     public function __construct(
         private readonly Service $supabase,
         private readonly UserRepository $userRepository,
-    ) {}
+    ) {
+        error_log("AuthService constructor - supabase class: " . get_class($supabase));
+    }
 
+    // actual
+//    public function registerUser(RegistrationRequest $request): array
+//    {
+//        try {
+//            $auth = $this->supabase->createAuth();
+//            $auth->createUserWithEmailAndPassword(
+//                $request->email,
+//                $request->password,
+//                ['username' => $request->username]
+//            );
+//            $data = $auth->data();
+//
+//            $userAttrs = UserMapper::toUser($request, $data);
+//            $this->userRepository->create($userAttrs);
+//
+//            return ['Message' => 'User registered successfully!'];
+//        } catch (\Exception $e) {
+//            throw new HttpResponseException(
+//                response()->json(
+//                    ['detail' => 'Registration failed: ' . $e->getMessage()],
+//                    Response::HTTP_BAD_REQUEST
+//                )
+//            );
+//        }
+//    }
+
+    //debug function
     public function registerUser(RegistrationRequest $request): array
     {
+        error_log("=== AuthService::registerUser called ===");
+        error_log("Email: " . $request->email);
+        error_log("Username: " . $request->username);
+
         try {
             $auth = $this->supabase->createAuth();
+            error_log("Got auth instance: " . get_class($auth));
+
             $auth->createUserWithEmailAndPassword(
                 $request->email,
                 $request->password,
                 ['username' => $request->username]
             );
+            error_log("Supabase user created successfully");
+
             $data = $auth->data();
+            error_log("Supabase response: " . json_encode($data));
 
             $userAttrs = UserMapper::toUser($request, $data);
+            error_log("User attributes: " . json_encode($userAttrs));
+
             $this->userRepository->create($userAttrs);
+            error_log("User saved to database");
 
             return ['Message' => 'User registered successfully!'];
         } catch (\Exception $e) {
+            error_log("!!! Exception in registerUser: " . get_class($e));
+            error_log("Message: " . $e->getMessage());
+            error_log("File: " . $e->getFile() . ":" . $e->getLine());
             throw new HttpResponseException(
                 response()->json(
                     ['detail' => 'Registration failed: ' . $e->getMessage()],
