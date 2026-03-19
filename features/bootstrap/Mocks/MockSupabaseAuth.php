@@ -20,9 +20,6 @@ class MockSupabaseAuth extends Auth
      */
     public function createUserWithEmailAndPassword(string $email, string $password, array $data = []): void
     {
-        echo ">>> MockSupabaseAuth::createUserWithEmailAndPassword\n";
-        echo "    Email: $email\n";
-
         $userId = 'user_' . uniqid();
         $this->users[$email] = [
             'id' => $userId,
@@ -31,23 +28,16 @@ class MockSupabaseAuth extends Auth
             'username' => $data['username'] ?? null
         ];
 
-        // Store the response in the format the mapper expects
-        // The real PHPSupabase\Auth returns the user object directly
         $this->lastResponse = (object)[
             'user' => (object)[
                 'id' => $userId,
                 'email' => $email
             ]
         ];
-
-        echo "    User created with ID: $userId\n";
-        echo "    Response stored: " . json_encode($this->lastResponse) . "\n";
     }
 
     public function signInWithEmailAndPassword(string $email, string $password): void
     {
-        echo ">>> MockSupabaseAuth::signInWithEmailAndPassword\n";
-
         if (!isset($this->users[$email])) {
             throw new \Exception('Invalid credentials');
         }
@@ -72,27 +62,19 @@ class MockSupabaseAuth extends Auth
 
     public function data(): object
     {
-        echo ">>> MockSupabaseAuth::data() called\n";
         if (!$this->lastResponse) {
             throw new \Exception('No data available');
         }
 
-        // The real PHPSupabase\Auth returns the data object directly
-        // So if we stored it with a 'data' wrapper, unwrap it
         if (isset($this->lastResponse->data)) {
-            $result = $this->lastResponse->data;
-            echo "    Returning (unwrapped): " . json_encode($result) . "\n";
-            return $result;
+            return $this->lastResponse->data;
         }
 
-        echo "    Returning: " . json_encode($this->lastResponse) . "\n";
         return $this->lastResponse;
     }
 
     public function getUser(string $accessToken): object
     {
-        echo ">>> MockSupabaseAuth::getUser\n";
-
         if (strpos($accessToken, 'mock_token_') === 0) {
             $userId = str_replace('mock_token_', '', $accessToken);
 

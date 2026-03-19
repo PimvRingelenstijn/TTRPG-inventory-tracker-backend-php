@@ -56,9 +56,6 @@ final class FeatureContext implements Context
 
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
-        // TEMP DEBUG: Remove after verifying mock is bound. Should show: Mocks\MockSupabaseService
-        echo "\n[DEBUG] Service bound to: " . get_class($this->app->make(\PHPSupabase\Service::class)) . "\n";
-
         $this->storedValues = [];
         $this->lastResponseStatus = null;
         $this->lastResponseJson = null;
@@ -319,13 +316,6 @@ final class FeatureContext implements Context
                 $this->lastResponseCookies[$cookie->getName()] = $cookie->getValue();
             }
         } catch (\Exception $e) {
-            // Log the actual exception
-            echo "\n!!! EXCEPTION CAUGHT: " . get_class($e) . "\n";
-            echo "Message: " . $e->getMessage() . "\n";
-            echo "File: " . $e->getFile() . ":" . $e->getLine() . "\n";
-            echo "Trace: \n" . $e->getTraceAsString() . "\n";
-
-            // Set error response
             $this->lastResponseStatus = 500;
             $this->lastResponseJson = ['message' => 'Server Error', 'error' => $e->getMessage()];
         }
