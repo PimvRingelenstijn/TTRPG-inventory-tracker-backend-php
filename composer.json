@@ -50,7 +50,7 @@
             "@php artisan migrate --ansi"
         ],
         "test": "php -d error_reporting=24575 vendor/bin/behat --format=progress --colors",
-        "test:pretty": "php -d error_reporting=24575 vendor/bin/behat --format=pretty",
+        "test:pretty": "php -d error_reporting=24575 vendor/bin/behat --format=pretty --colors",
         "behat": "php -d error_reporting=24575 vendor/bin/behat"
     },
     "extra": {

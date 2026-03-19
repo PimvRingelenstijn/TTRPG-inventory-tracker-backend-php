@@ -2,14 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\GameSystem;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\GameSystem>
  */
-class UserFactory extends Factory
+class GameSystemFactory extends Factory
 {
+    protected $model = GameSystem::class;
+
     /**
      * Define the model's default state.
      *
@@ -18,8 +20,9 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'uuid' => (string) Str::uuid(),
-            'username' => fake()->userName(),
+            'name' => fake()->words(3, true),
+            'description' => fake()->sentence(),
+            'user_uuid' => null, // or create a user if needed
             'created_at' => now(),
             'updated_at' => now(),
         ];

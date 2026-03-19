@@ -5,6 +5,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Gherkin\Node\TableNode;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
 
@@ -64,60 +65,44 @@ final class FeatureContext implements Context
 
     // ============ 4. GIVEN STEPS (Setup) ============
     /**
-     * @Given a game system exists with name :name and description :description
+     * @Given a :model exists with:
+     *
+     * Example:
+     *   Given a GameSystem exists with:
+     *     | name        | D&D 5e                                |
+     *     | description | The fifth edition of the world's... |
      */
-    public function gameSystemExists(string $name, string $description): void
+    public function aModelExistsWith(string $model, TableNode $table): void
     {
-        // Create the game system via API
-        $this->sendRequestWithBody('POST', '/game-systems', new PyStringNode([
-            json_encode([
-                'name' => $name,
-                'description' => $description
-            ])
-        ], 0));
+        $attributes = [];
+        foreach ($table->getRowsHash() as $key => $value) {
+            $attributes[$key] = $value;
+        }
 
-        // Verify it was created successfully
-        $this->assertResponseStatus(201);
+        $modelClass = $this->resolveModelClass($model);
+        $instance = $this->createModel($modelClass, $attributes);
 
-        // Store the ID for later use
-        $this->storeResponseValue('id', 'game_system_id');
+        $snakeCase = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $model));
+        $key = $snakeCase . '_id';
+
+        $this->storedValues[$key] = $instance->id;
     }
 
     /**
-     * @Given there are :count game systems in the system
+     * @Given there are :count :model records
+     *
+     * Example: Given there are 3 GameSystem records
      */
-    public function thereAreGameSystems(int $count): void
+    public function thereAreModelRecords(int $count, string $model): void
     {
-        // Create multiple game systems
-        for ($i = 1; $i <= $count; $i++) {
-            $this->sendRequestWithBody('POST', '/game-systems', new PyStringNode([
-                json_encode([
-                    'name' => "Game System {$i}",
-                    'description' => "Description for game system {$i}"
-                ])
-            ], 0));
+        $modelClass = $this->resolveModelClass($model);
 
-            $this->assertResponseStatus(201);
+        for ($i = 1; $i <= $count; $i++) {
+            $instance = $this->createModel($modelClass);
         }
     }
 
-    /**
-     * @Given a registered user exists with email :email, username :username and password :password
-     */
-    public function registeredUserExists(string $email, string $username, string $password): void
-    {
-        // Register the user via the actual registration endpoint
-        $this->sendRequestWithBody('POST', '/auth/register', new PyStringNode([
-            json_encode([
-                'email' => $email,
-                'username' => $username,
-                'password' => $password
-            ])
-        ], 0));
 
-        // Verify registration was successful
-        $this->assertResponseStatus(201);
-    }
 
     // ============ 5. WHEN STEPS (Actions) ============
     /**
@@ -213,7 +198,6 @@ final class FeatureContext implements Context
         }
     }
 
-    // ============ THEN STEPS ============
     /**
      * @Then I should receive an access token cookie
      */
@@ -250,38 +234,6 @@ final class FeatureContext implements Context
     }
 
     // ============ 8. PRIVATE HELPERS ============
-//    private function performRequest(string $method, string $uri, array $data): void
-//    {
-//        $method = strtoupper($method);
-//        $server = [
-//            'HTTP_CONTENT_TYPE' => 'application/json',
-//            'HTTP_ACCEPT' => 'application/json',
-//        ];
-//
-//        $parameters = [];
-//        $content = null;
-//
-//        if (!empty($data) && in_array($method, ['POST', 'PUT', 'PATCH'])) {
-//            $parameters = $data;
-//            $content = json_encode($data);
-//        }
-//
-//        $request = Request::create($uri, $method, $parameters, [], [], $server, $content);
-//        $request->headers->set('Content-Type', 'application/json');
-//
-//        $kernel = $this->app->make(HttpKernel::class);
-//        $response = $kernel->handle($request);
-//        $kernel->terminate($request, $response);
-//
-//        $this->lastResponseStatus = $response->getStatusCode();
-//        $this->lastResponseJson = json_decode($response->getContent(), true);
-//
-//        $this->lastResponseCookies = [];
-//        foreach ($response->headers->getCookies() as $cookie) {
-//            $this->lastResponseCookies[$cookie->getName()] = $cookie->getValue();
-//        }
-//    }
-
     private function performRequest(string $method, string $uri, array $data): void
     {
         $method = strtoupper($method);
@@ -330,5 +282,39 @@ final class FeatureContext implements Context
             }
         }
         return $uri;
+    }
+
+    /**
+     * Generic method to create any model using factories
+     */
+    private function createModel(string $modelClass, array $attributes = []): object
+    {
+        // Check if the model uses the Factory trait
+        if (!method_exists($modelClass, 'factory')) {
+            throw new \RuntimeException("Model {$modelClass} does not have a factory");
+        }
+
+        // Create the model using its factory
+        $model = $modelClass::factory()->create($attributes);
+
+        return $model;
+    }
+
+    /**
+     * Resolve model name to full class name
+     */
+    private function resolveModelClass(string $model): string
+    {
+        $models = [
+            'GameSystem' => \App\Models\GameSystem::class,
+            'User' => \App\Models\User::class,
+
+        ];
+
+        if (!isset($models[$model])) {
+            throw new \RuntimeException("Unknown model: {$model}");
+        }
+
+        return $models[$model];
     }
 }

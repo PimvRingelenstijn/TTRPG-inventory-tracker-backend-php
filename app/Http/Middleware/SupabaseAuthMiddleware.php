@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 use PHPSupabase\Service;
 use Symfony\Component\HttpFoundation\Response;
 
-class SupabaseAuthMiddleware
+readonly class SupabaseAuthMiddleware
 {
     public function __construct(
-        private readonly Service $supabase
+        private Service $supabase
     ) {}
 
     /**
