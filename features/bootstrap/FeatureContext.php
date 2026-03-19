@@ -56,6 +56,9 @@ final class FeatureContext implements Context
 
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
+        // TEMP DEBUG: Remove after verifying mock is bound. Should show: Mocks\MockSupabaseService
+        echo "\n[DEBUG] Service bound to: " . get_class($this->app->make(\PHPSupabase\Service::class)) . "\n";
+
         $this->storedValues = [];
         $this->lastResponseStatus = null;
         $this->lastResponseJson = null;
