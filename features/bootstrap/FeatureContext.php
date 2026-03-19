@@ -37,37 +37,22 @@ final class FeatureContext implements Context
     {
         $this->app = require $this->basePath . '/bootstrap/app.php';
 
-        // First, check what's currently bound
-        if ($this->app->bound(\PHPSupabase\Service::class)) {
-            echo "Service was bound to: " . get_class($this->app->make(\PHPSupabase\Service::class)) . "\n";
-        }
+        // Bootstrap first so AppServiceProvider registers the real Service
+        $this->app->make(HttpKernel::class)->bootstrap();
+        $this->app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-        // Remove any existing binding
-        if ($this->app->bound(\PHPSupabase\Service::class)) {
-            $this->app->offsetUnset(\PHPSupabase\Service::class);
-        }
+        // Now replace with mock for Behat (production code stays clean, test setup does the swap)
+        $this->app->forgetInstance(\PHPSupabase\Service::class);
+        $this->app->offsetUnset(\PHPSupabase\Service::class);
+        $this->app->singleton(\PHPSupabase\Service::class, fn () => new \Mocks\MockSupabaseService());
 
-        // Bind our mock
-        $this->app->singleton(\PHPSupabase\Service::class, function ($app) {
-            echo "Creating mock service...\n";
-            return new \Mocks\MockSupabaseService();
-        });
-
-        // CRITICAL: Refresh the AuthService instance
-        // Force the container to resolve a new AuthService with our mock
         $this->app->forgetInstance(\App\Services\AuthService::class);
-
-        // Re-bind AuthService to ensure it gets the mock
         $this->app->bind(\App\Services\AuthService::class, function ($app) {
             return new \App\Services\AuthService(
                 $app->make(\PHPSupabase\Service::class),
                 $app->make(\App\Repositories\UserRepository::class)
             );
         });
-
-        // Now bootstrap the kernels
-        $this->app->make(HttpKernel::class)->bootstrap();
-        $this->app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
