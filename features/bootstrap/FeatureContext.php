@@ -4,7 +4,6 @@ putenv('APP_ENV=testing');
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 use Behat\Behat\Context\Context;
-use Behat\Gherkin\Node\PyStringNode;
 use Behat\Gherkin\Node\TableNode;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
@@ -66,18 +65,11 @@ final class FeatureContext implements Context
     // ============ 4. GIVEN STEPS (Setup) ============
     /**
      * @Given a :model exists with:
-     *
-     * Example:
-     *   Given a GameSystem exists with:
-     *     | name        | D&D 5e                                |
-     *     | description | The fifth edition of the world's... |
+
      */
     public function aModelExistsWith(string $model, TableNode $table): void
     {
-        $attributes = [];
-        foreach ($table->getRowsHash() as $key => $value) {
-            $attributes[$key] = $value;
-        }
+        $attributes = $this->tableToArray($table);
 
         $modelClass = $this->resolveModelClass($model);
         $instance = $this->createModel($modelClass, $attributes);
@@ -90,8 +82,6 @@ final class FeatureContext implements Context
 
     /**
      * @Given there are :count :model records
-     *
-     * Example: Given there are 3 GameSystem records
      */
     public function thereAreModelRecords(int $count, string $model): void
     {
@@ -102,6 +92,36 @@ final class FeatureContext implements Context
         }
     }
 
+    /**
+     * @Given an authenticated user exists with:
+     */
+    public function anAuthenticatedUserExistsWith(TableNode $table): void
+    {
+        $attributes = $this->tableToArray($table);
+        $attributes["user_uuid"] = "user_" . uniqid();
+
+        // Payload used by mock Supabase auth for login checks.
+        $authAttributes = [
+            "email" => $attributes["email"],
+            "password" => $attributes["password"],
+            "user_uuid" => $attributes["user_uuid"],
+        ];
+
+        //** @var \PHPSupabase\Service $supabaseService */
+        $supabaseService = $this->app->make(\PHPSupabase\Service::class);
+        $auth = $supabaseService->createAuth();
+
+        $auth->addUser($authAttributes);
+
+        // Payload used by Eloquent factory for the local users table.
+        $userAttributes = [
+            "uuid" => $attributes["user_uuid"],
+            "username" => $attributes["username"],
+        ];
+
+        $user = $this->createModel(\App\Models\User::class, $userAttributes);
+        $this->storedValues["user_uuid"] = $user->uuid;
+    }
 
 
     // ============ 5. WHEN STEPS (Actions) ============
@@ -115,12 +135,12 @@ final class FeatureContext implements Context
     }
 
     /**
-     * @When /^I send a (POST|PUT|PATCH) request to ([^ ]+) with body:$/
+     * @When /^I send a (POST|PUT|PATCH) request to ([^ ]+) with:$/
      */
-    public function sendRequestWithBody(string $method, string $uri, PyStringNode $body): void
+    public function sendRequestWithBody(string $method, string $uri, TableNode $table): void
     {
         $uri = $this->expandUri(trim($uri));
-        $data = json_decode($body->getRaw(), true, 512, JSON_THROW_ON_ERROR);
+        $data = $this->tableToArray($table);
         $this->performRequest($method, $uri, $data);
     }
 
@@ -316,5 +336,17 @@ final class FeatureContext implements Context
         }
 
         return $models[$model];
+    }
+
+    /**
+     * Convert TableNode to associative array
+     */
+    private function tableToArray(TableNode $table): array
+    {
+        $result = [];
+        foreach ($table->getRowsHash() as $key => $value) {
+            $result[$key] = $value;
+        }
+        return $result;
     }
 }

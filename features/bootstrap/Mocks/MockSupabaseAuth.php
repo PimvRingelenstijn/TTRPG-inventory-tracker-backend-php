@@ -24,8 +24,7 @@ class MockSupabaseAuth extends Auth
         $this->users[$email] = [
             'id' => $userId,
             'email' => $email,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'username' => $data['username'] ?? null
+            'password' => password_hash($password, PASSWORD_DEFAULT)
         ];
 
         $this->lastResponse = (object)[
@@ -96,5 +95,14 @@ class MockSupabaseAuth extends Auth
     {
         $this->users = [];
         $this->lastResponse = null;
+    }
+
+    public function addUser(array $attributes): void
+    {
+        $this->users[$attributes["email"]] = [
+            'id' => $attributes["user_uuid"],
+            'email' => $attributes["email"],
+            'password' => password_hash($attributes["password"], PASSWORD_DEFAULT)
+        ];
     }
 }

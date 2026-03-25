@@ -4,13 +4,9 @@ Feature: Game systems API
     I want to create, list, and retrieve game systems
 
     Scenario: Create a new game system
-        When I send a POST request to /game-systems with body:
-      """
-      {
-        "name": "Dungeons & Dragons 5e",
-        "description": "The fifth edition of the world's greatest roleplaying game"
-      }
-      """
+        When I send a POST request to /game-systems with:
+            | name        | Dungeons & Dragons 5e                     |
+            | description | The fifth edition of the world's greatest roleplaying game |
         Then the response status should be 201
         And the response should contain key "id"
         And the response should contain "name" with value "Dungeons & Dragons 5e"
