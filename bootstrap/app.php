@@ -4,6 +4,7 @@ use App\Http\Middleware\SupabaseAuthMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: '',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Add CORS to API middleware group
+        $middleware->api([
+            HandleCors::class,
+        ]);
+
         $middleware->alias([
             'auth.supabase' => SupabaseAuthMiddleware::class,
         ]);

@@ -38,10 +38,12 @@ COPY . .
 # Install Composer dependencies (this creates the vendor folder)
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# Cache Laravel configurations (using environment variables from Render)
-RUN php artisan config:cache \
+# After composer install, clear and recache
+RUN php artisan config:clear \
+    && php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache
+
 
 # Configure Apache to serve from public directory
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
