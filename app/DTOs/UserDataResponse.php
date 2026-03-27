@@ -4,13 +4,13 @@ namespace App\DTOs;
 
 use Carbon\Carbon;
 
-class UserDataResponse
+readonly class UserDataResponse
 {
     public function __construct(
-        public readonly string $uuid,
-        public readonly string $email,
-        public readonly string $username,
-        public readonly Carbon $created_at,
+        public string $uuid,
+        public string $email,
+        public string $username,
+        public Carbon $created_at,
     ) {}
 
     public function toArray(): array
