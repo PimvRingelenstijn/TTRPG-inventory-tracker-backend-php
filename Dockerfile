@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (simplified to avoid build issues)
+# Install PHP extensions
 RUN docker-php-ext-install \
     pdo_mysql \
     pdo_pgsql \
@@ -22,13 +22,6 @@ RUN docker-php-ext-install \
     pcntl \
     bcmath \
     zip
-
-# Install GD separately with minimal configuration
-RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -39,14 +32,23 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
+# Copy application files (vendor will be ignored by .dockerignore, which is good)
 COPY . .
+
+# Install Composer dependencies (this creates the vendor folder)
+RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Cache Laravel configurations (using environment variables from Render)
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
 # Configure Apache to serve from public directory
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Set permissions
+# Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
 EXPOSE 80
