@@ -15,10 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: '',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Add CORS to API middleware group
-        $middleware->api([
-            HandleCors::class,
-        ]);
+        // Add CORS to global middleware (applies to all routes)
+        $middleware->prepend(HandleCors::class);
 
         $middleware->alias([
             'auth.supabase' => SupabaseAuthMiddleware::class,
