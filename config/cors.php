@@ -11,7 +11,7 @@ return [
     |
     */
 
-    'paths' => ['*'],
+    'paths' => ['auth/*', 'game-systems/*'],
 
     'allowed_methods' => ['*'],
 
